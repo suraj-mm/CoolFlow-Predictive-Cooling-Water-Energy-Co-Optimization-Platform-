@@ -1,0 +1,12 @@
+{
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": "engine10/static",
+  "devCommand": "echo 'No dev server needed'",
+  "framework": "other",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
