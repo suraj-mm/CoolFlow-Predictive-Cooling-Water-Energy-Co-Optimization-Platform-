@@ -56,3 +56,25 @@ The standalone engine runs locally at `http://127.0.0.1:8000/`:
 - Serves the complete 4,320-record stream directly from `data/dataset_stream.json`.
 - Automatically streams live ticks into the SQLite WAL state store.
 - Supports Private Network Access (PNA) and CORS.
+
+---
+
+## 5. Permanent 24/7 Hosting on Streamlit Community Cloud
+
+Streamlit Community Cloud hosts your dashboard permanently for free on cloud servers (it will never deactivate when you close your code editor or laptop):
+
+1. **Push your repository to GitHub**:
+   ```bash
+   git branch -M main
+   git remote add origin https://github.com/<your-username>/<your-repo-name>.git
+   git push -u origin main
+   ```
+2. **Open Streamlit Cloud**:
+   Go to [share.streamlit.io](https://share.streamlit.io) and log in with GitHub.
+3. **Deploy New App**:
+   - **Repository**: `<your-username>/<your-repo-name>`
+   - **Branch**: `main`
+   - **Main file path**: `streamlit_app.py`
+4. **Click Deploy**:
+   Your dashboard will be live 24/7 at `https://<your-app-name>.streamlit.app`.
+
