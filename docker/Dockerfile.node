@@ -1,0 +1,17 @@
+# Base image for all 3 testbed nodes.
+# Kept minimal: python:3.11-slim + project deps.
+# Engine 8 will manage this container via docker-py SDK.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only runtime deps needed for Engine 8 execution
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    pandas pyarrow numpy pydantic pydantic-settings requests \
+    && rm -rf /root/.cache/pip
+
+COPY shared/ ./shared/
+
+# Default: idle loop so Engine 8 can exec commands into the container
+CMD ["python", "-c", "import time; [time.sleep(60) for _ in iter(int, 1)]"]

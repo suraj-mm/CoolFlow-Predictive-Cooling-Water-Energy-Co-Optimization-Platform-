@@ -1,0 +1,51 @@
+# 3-node testbed for Engine 8 (Dual-Track Execution — Track B).
+# Each node gets 2 vCPUs and 2 GB RAM by default.
+# Engine 8 adjusts --cpus and --cpuset-cpus at runtime to simulate DVFS.
+
+version: "3.9"
+
+services:
+  node1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: dc_node1
+    hostname: node1
+    cpuset: "0,1"
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ID=1
+    volumes:
+      - ../data:/app/data:ro
+    restart: "no"
+
+  node2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: dc_node2
+    hostname: node2
+    cpuset: "2,3"
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ID=2
+    volumes:
+      - ../data:/app/data:ro
+    restart: "no"
+
+  node3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: dc_node3
+    hostname: node3
+    cpuset: "4,5"
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ID=3
+    volumes:
+      - ../data:/app/data:ro
+    restart: "no"

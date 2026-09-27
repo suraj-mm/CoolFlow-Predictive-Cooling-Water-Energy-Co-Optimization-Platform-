@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large Raw Datasets (>100MB limit for GitHub)
+EQCAM_Dataset_FINAL_with_RC.csv
+*.csv.gz
+
+# Executables
+*.exe
+cloudflared.exe
+
+# SQLite database local WAL
+*.db
+*.db-wal
+*.db-shm
+
+# Environments & IDEs
+.env
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/
+
+# Build artifacts
+dist/
+build/
+node_modules/
+*.parquet
+data/artifacts/

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoolFlow — "Predictive Cooling & Water-Energy Co-Optimization Platform"</title>
+  <meta name="description" content="Live dataset monitoring and autonomous orchestration console for datacenter thermal cooling, water compliance, and explainable AI decisions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-raised: #182234;
+      --border: #223049;
+      --text: #f1f5f9;
+      --text-muted: #8494ab;
+      --electric-sky: #38bdf8;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --indigo: #818cf8;
+      --destructive: #ef4444;
+      --radius: 6px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    .container { max-width: 1720px; margin: 0 auto; }
+    
+    /* Header */
+    header { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 18px; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+    .brand-box { display: flex; align-items: flex-start; gap: 14px; }
+    .logo-icon {
+      width: 42px; height: 42px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center;
+      color: var(--electric-sky); box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+    }
+    .breadcrumb { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: var(--electric-sky); text-transform: uppercase; }
+    h1 { font-size: 22px; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
+    h1 span { font-weight: 300; color: var(--text-muted); }
+    
+    .status-strip {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      padding-top: 12px; border-top: 1px solid var(--border); font-size: 10px;
+    }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 600;
+    }
+    .pill-emerald { border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.08); color: var(--emerald); }
+    .pill-sky { border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.08); color: var(--electric-sky); }
+    .pill-indigo { border: 1px solid rgba(129, 140, 248, 0.3); background: rgba(129, 140, 248, 0.08); color: var(--indigo); }
+    .pill-live { border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.12); color: #fff; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .dot-live { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+
+    .env-stats { display: flex; align-items: center; gap: 16px; color: var(--text-muted); }
+    .env-stats b { color: #fff; }
+
+    /* Interactive Dataset Control Bar */
+    .control-bar {
+      background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      gap: 12px; margin-bottom: 18px;
+    }
+    .ctrl-group { display: flex; align-items: center; gap: 8px; }
+    .btn {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: #fff;
+      padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--electric-sky); color: var(--electric-sky); }
+    .btn.active { background: var(--electric-sky); color: #0b0f19; border-color: var(--electric-sky); }
+    .slider-track { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 10px; }
+    input[type=range] { width: 100%; accent-color: var(--electric-sky); cursor: pointer; }
+
+    /* Top KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .card {
+      background: linear-gradient(155deg, rgba(24, 34, 52, 0.7), var(--surface));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+      display: flex; flex-direction: column; justify-content: space-between; min-height: 155px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
+    .card-val { font-size: 32px; font-weight: 600; line-height: 1; margin: 10px 0 6px 0; color: #fff; }
+    .card-val span { font-size: 13px; color: var(--text-muted); font-weight: 400; margin-left: 2px; }
+    .card-footer { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    
+    /* Load Bar (Electric Sky Blue) */
+    .load-bar-wrap { width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+    .load-bar { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+    .bar-sky { background: var(--electric-sky) !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+    .bar-emerald { background: var(--emerald); }
+    .bar-amber { background: var(--amber); }
+
+    /* Main Grid Panels */
+    .grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; margin-bottom: 20px; }
+    @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+    }
+    .panel-header {
+      padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex;
+      justify-content: space-between; align-items: center; background: rgba(255,255,255,0.015);
+    }
+    .panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .panel-body { padding: 18px; }
+
+    /* Node Blade Cards */
+    .nodes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .node-card {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .node-card:hover { border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.04); }
+    .node-card.selected { border-color: var(--electric-sky); background: rgba(56, 189, 248, 0.08); box-shadow: 0 0 14px rgba(56, 189, 248, 0.15); }
+    .node-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .node-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; font-size: 9px; }
+    .node-stats p { color: var(--text-muted); }
+    .node-stats b { display: block; font-size: 12px; color: #fff; margin-top: 2px; }
+
+    /* CQR Range Box */
+    .cqr-box { background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+    .cqr-slider-track {
+      position: relative; height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px;
+      margin: 16px 0 8px 0;
+    }
+    .cqr-range-bar {
+      position: absolute; height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--indigo), var(--electric-sky), var(--amber));
+    }
+    .cqr-pip {
+      position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%;
+      background: var(--electric-sky); border: 2px solid #fff; transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); transition: left 0.3s;
+    }
+
+    /* Psychrometric Gauge */
+    .stull-track {
+      position: relative; height: 8px; background: rgba(255,255,255,0.06); border-radius: 99px;
+      margin: 20px 0 10px 0; overflow: visible;
+    }
+    .stull-seg-free { position: absolute; left: 0; width: 43.3%; height: 100%; background: var(--emerald); border-radius: 99px 0 0 99px; }
+    .stull-seg-evap { position: absolute; left: 43.3%; width: 30%; height: 100%; background: var(--electric-sky); }
+    .stull-seg-chiller { position: absolute; left: 73.3%; right: 0; height: 100%; background: var(--indigo); border-radius: 0 99px 99px 0; }
+    .stull-needle {
+      position: absolute; top: -6px; width: 20px; height: 20px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--surface); transform: translateX(-50%);
+      box-shadow: 0 0 12px rgba(0,0,0,0.5); transition: left 0.4s;
+    }
+
+    /* Waterfall bars */
+    .waterfall-item { margin-bottom: 12px; }
+    .waterfall-header { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+
+    /* SVG Chart */
+    .chart-svg { width: 100%; height: 210px; overflow: visible; }
+    .pareto-point { cursor: pointer; transition: r 0.2s, stroke-width 0.2s; }
+    .pareto-point:hover { r: 5; }
+
+    /* Audit Log */
+    .log-container {
+      max-height: 120px; overflow-y: auto; font-size: 10px; line-height: 1.6;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px;
+    }
+    .log-line span { color: var(--emerald); margin-right: 6px; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border); padding-top: 14px; margin-top: 24px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <div class="brand-box">
+          <div class="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="breadcrumb mono">COOLFLOW / COMMAND CENTER • SYSTEM OVERVIEW</div>
+            <h1>CoolFlow <span>|</span> "Predictive Cooling & Water-Energy Co-Optimization Platform"</h1>
+          </div>
+        </div>
+        <div class="pill pill-sky mono" style="font-size: 11px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          VIEW ONLY CONSOLE
+        </div>
+      </div>
+
+      <div class="status-strip">
+        <div class="pills mono">
+          <span class="pill pill-emerald"><span class="dot dot-live"></span> CLOSED-LOOP ACTIVE</span>
+          <span class="pill pill-live" id="stream-badge"><span class="dot dot-live"></span> LIVE DATASET STREAM · 30-DAY MONTH (MARCH 2022)</span>
+          <span class="pill pill-sky"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> REGULATORY WATER CAP ENFORCED</span>
+          <span class="pill pill-indigo">145ms TICK RESPONSE</span>
+        </div>
+        <div class="env-stats mono">
+          <span>AMBIENT <b id="stat-ambient">-0.4°C</b></span>
+          <span>RH <b id="stat-rh">82%</b></span>
+          <span>STULL T<sub>WET</sub> <b id="stat-twet" style="color: var(--electric-sky);">-2.1°C</b></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Interactive Real-Time 30-Day Dataset Control Bar -->
+    <div class="control-bar mono">
+      <div class="ctrl-group">
+        <span style="font-size: 11px; color: var(--electric-sky); font-weight: 700;">DATASET PLAYER (30 DAYS):</span>
+        <button class="btn" id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause live streaming">
+          <span id="play-icon">⏸</span> <span id="play-text">PAUSE</span>
+        </button>
+        <button class="btn" onclick="stepDataset()" title="Step forward 1 tick (+10 mins)">
+          <span>⏭</span> STEP
+        </button>
+        <button class="btn" onclick="jumpDay(-1)" title="Jump back 1 day (-144 ticks)">
+          <span>⏮</span> -1D
+        </button>
+        <button class="btn" onclick="jumpDay(1)" title="Jump forward 1 day (+144 ticks)">
+          <span>⏭</span> +1D
+        </button>
+      </div>
+
+      <div class="slider-track" style="flex: 2; min-width: 320px;">
+        <span style="font-size: 10px; color: var(--text-muted); white-space: nowrap;">TIMELINE (30d):</span>
+        <input type="range" id="dataset-slider" min="0" max="4319" value="0" oninput="onSliderSeek(this.value)">
+        <span id="dataset-time-label" style="font-size: 11px; color: #fff; min-width: 210px; font-weight: 600;">DAY 01/30 · 2022-03-01 00:00:00</span>
+      </div>
+
+      <div class="ctrl-group">
+        <span style="font-size: 10px; color: var(--text-muted);">JUMP:</span>
+        <select id="day-select" onchange="jumpToDay(this.value)" class="btn mono" style="background: rgba(24,34,52,0.95); font-size: 10px; padding: 4px 6px;">
+          <option value="1">Day 01 (Sub-zero Free Air -4°C)</option>
+          <option value="5">Day 05 (Diurnal Transition)</option>
+          <option value="10">Day 10 (Evaporative Peak)</option>
+          <option value="15">Day 15 (Chiller Heatwave 44°C)</option>
+          <option value="20">Day 20 (High Compute Load 99%)</option>
+          <option value="25">Day 25 (Mixed Gate Transition)</option>
+          <option value="30">Day 30 (Month-End Wrap)</option>
+        </select>
+        <span style="font-size: 10px; color: var(--text-muted); margin-left: 4px;">SPEED:</span>
+        <button class="btn active" id="spd-1x" onclick="setSpeed(1)">1x</button>
+        <button class="btn" id="spd-5x" onclick="setSpeed(5)">5x</button>
+        <button class="btn" id="spd-20x" onclick="setSpeed(20)">20x</button>
+        <button class="btn" id="spd-60x" onclick="setSpeed(60)">60x</button>
+      </div>
+    </div>
+
+    <!-- Executive KPI Row -->
+    <div class="kpi-grid">
+      <!-- Card 1: Peak Temp -->
+      <div class="card">
+        <div class="card-label">Peak Server Temperature</div>
+        <div class="card-val" id="kpi-temp">68.5<span>°C</span></div>
+        <div class="load-bar-wrap"><div class="load-bar bar-sky" id="kpi-temp-bar" style="width: 72%;"></div></div>
+        <div class="card-footer mono" id="kpi-temp-status" style="color: var(--emerald); margin-top: 8px;">
+          ● NORMAL RANGE · limit 80°C
+        </div>
+      </div>
+
+      <!-- Card 2: Water Consumption -->
+      <div class="card">
+        <div class="card-label">Water Consumption</div>
+        <div class="card-val" id="kpi-water">184<span>L/h</span></div>
+        <div class="load-bar-wrap"><div class="load-bar bar-sky" id="kpi-water-bar" style="width: 46%;"></div></div>
+        <div class="card-footer mono" style="color: var(--emerald); margin-top: 8px;">
+          ↓ <span id="kpi-saved">1,421</span> L saved vs baseline
+        </div>
+      </div>
+
+      <!-- Card 3: WUE -->
+      <div class="card">
+        <div class="card-label">Water Usage Effectiveness</div>
+        <div class="card-val" id="kpi-wue">0.52<span>L/kWh</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); margin-top: 10px;" class="mono">
+          <span>TARGET ≤0.60</span><span>LIVE RATIO</span>
+        </div>
+        <div class="card-footer mono" style="color: var(--emerald); margin-top: 8px;">
+          ● ASHRAE TC 9.9 COMPLIANT
+        </div>
+      </div>
+
+      <!-- Card 4: IT Power -->
+      <div class="card">
+        <div class="card-label">IT Total Power</div>
+        <div class="card-val" id="kpi-power">354<span>kW</span></div>
+        <div class="load-bar-wrap" style="display: flex; gap: 2px;">
+          <div class="load-bar bar-sky" id="split-0" style="width: 35%;"></div>
+          <div class="load-bar" id="split-1" style="width: 33%; background: var(--indigo);"></div>
+          <div class="load-bar bar-emerald" id="split-2" style="width: 32%;"></div>
+        </div>
+        <div class="card-footer mono" style="margin-top: 8px;">
+          Load split <span id="kpi-split" style="color: #fff; margin-left: 4px;">82% / 65% / 58%</span>
+        </div>
+      </div>
+
+      <!-- Card 5: Cooling Mode -->
+      <div class="card">
+        <div class="card-label">Active Cooling Mode</div>
+        <div class="card-val" id="kpi-mode">01</div>
+        <div id="kpi-mode-name" style="font-size: 11px; color: #fff; margin-top: 4px;">Direct Evaporative</div>
+        <div class="card-footer mono" id="kpi-mode-tag" style="color: var(--emerald); margin-top: 8px;">
+          EVAPORATIVE ACTIVE
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Digital Twin & Psychrometric Manager -->
+    <div class="grid-2">
+      <!-- Digital Twin -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--electric-sky)" stroke-width="2"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+            Server Rack Digital Twin
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--emerald);">● 3 NODES ONLINE</span>
+        </div>
+        <div class="panel-body">
+          <div class="nodes-grid">
+            <div class="node-card selected" id="node-card-0" onclick="selectNode(0)">
+              <div class="node-head">
+                <span class="mono" style="font-size: 11px; font-weight: 700;">NODE 00</span>
+                <span class="mono" style="font-size: 8px; color: var(--emerald);" id="node0-status">OPTIMAL</span>
+              </div>
+              <div class="node-stats mono">
+                <div><p>CPU</p><b id="n0-cpu">99%</b></div>
+                <div><p>POWER</p><b id="n0-pwr">445W</b></div>
+                <div><p>FAN</p><b id="n0-fan">55%</b></div>
+                <div><p>TEMP</p><b id="n0-temp" style="color: var(--electric-sky);">68.5°</b></div>
+              </div>
+              <div class="load-bar-wrap"><div class="load-bar bar-sky" id="n0-bar" style="width: 99%;"></div></div>
+            </div>
+
+            <div class="node-card" id="node-card-1" onclick="selectNode(1)">
+              <div class="node-head">
+                <span class="mono" style="font-size: 11px; font-weight: 700;">NODE 01</span>
+                <span class="mono" style="font-size: 8px; color: var(--emerald);" id="node1-status">OPTIMAL</span>
+              </div>
+              <div class="node-stats mono">
+                <div><p>CPU</p><b id="n1-cpu">90%</b></div>
+                <div><p>POWER</p><b id="n1-pwr">404W</b></div>
+                <div><p>FAN</p><b id="n1-fan">55%</b></div>
+                <div><p>TEMP</p><b id="n1-temp" style="color: var(--electric-sky);">65.0°</b></div>
+              </div>
+              <div class="load-bar-wrap"><div class="load-bar bar-sky" id="n1-bar" style="width: 90%;"></div></div>
+            </div>
+
+            <div class="node-card" id="node-card-2" onclick="selectNode(2)">
+              <div class="node-head">
+                <span class="mono" style="font-size: 11px; font-weight: 700;">NODE 02</span>
+                <span class="mono" style="font-size: 8px; color: var(--emerald);" id="node2-status">OPTIMAL</span>
+              </div>
+              <div class="node-stats mono">
+                <div><p>CPU</p><b id="n2-cpu">80%</b></div>
+                <div><p>POWER</p><b id="n2-pwr">361W</b></div>
+                <div><p>FAN</p><b id="n2-fan">55%</b></div>
+                <div><p>TEMP</p><b id="n2-temp" style="color: var(--electric-sky);">61.2°</b></div>
+              </div>
+              <div class="load-bar-wrap"><div class="load-bar bar-sky" id="n2-bar" style="width: 80%;"></div></div>
+            </div>
+          </div>
+
+          <!-- CQR Envelope -->
+          <div class="cqr-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase;">CQR Temperature Envelope</span>
+                <span class="mono" style="font-size: 9px; color: var(--text-muted);" id="cqr-node-tag">/ NODE 00</span>
+              </div>
+              <span class="mono" style="font-size: 9px; color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); padding: 2px 6px; border-radius: 4px;" id="cqr-conf">
+                94% CONFIDENCE
+              </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 8px;" class="mono">
+              <div><p style="font-size: 9px; color: var(--text-muted);">T_LOW</p><p style="font-size: 18px; font-weight: 600; color: var(--indigo);" id="cqr-low">65.7°</p></div>
+              <div><p style="font-size: 9px; color: var(--text-muted);">T_MID (FORECAST)</p><p style="font-size: 18px; font-weight: 600; color: var(--electric-sky);" id="cqr-mid">68.7°</p></div>
+              <div><p style="font-size: 9px; color: var(--text-muted);">T_HIGH (97.5%)</p><p style="font-size: 18px; font-weight: 600; color: var(--amber);" id="cqr-high">71.9°</p></div>
+            </div>
+
+            <div class="cqr-slider-track">
+              <div class="cqr-range-bar" id="cqr-bar" style="left: 20%; width: 60%;"></div>
+              <div class="cqr-pip" id="cqr-pip" style="left: 50%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 8px; color: var(--text-muted);" class="mono">
+              <span>50°C</span><span>SAFE LIMIT: 76°C</span><span>CRITICAL: 80°C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Psychrometric Mode Manager -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--electric-sky)" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            Psychrometric Mode Manager
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--text-muted);">AUTO / CLOSED-LOOP</span>
+        </div>
+        <div class="panel-body">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+            <div>
+              <div style="font-size: 9px; color: var(--text-muted);" class="mono">STULL WET-BULB TEMPERATURE</div>
+              <div style="font-size: 32px; font-weight: 600; color: #fff;" class="mono" id="psych-twet">
+                22.9<span style="font-size: 16px; color: var(--text-muted);">°C</span>
+              </div>
+            </div>
+            <span class="pill mono" id="psych-gate" style="font-size: 10px; border: 1px solid rgba(245, 158, 11, 0.4); color: var(--amber); background: rgba(245, 158, 11, 0.1);">
+              GATE CLOSED (T<sub>WET</sub> > 13°C)
+            </span>
+          </div>
+
+          <!-- Stull Gauge -->
+          <div class="stull-track">
+            <div class="stull-seg-free"></div>
+            <div class="stull-seg-evap"></div>
+            <div class="stull-seg-chiller"></div>
+            <div class="stull-needle" id="stull-needle" style="left: 76%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 8px; color: var(--text-muted); margin-bottom: 18px;" class="mono">
+            <span>0°C FREE-AIR</span>
+            <span>13°C GATE</span>
+            <span>22°C CHILLER</span>
+            <span>30°C</span>
+          </div>
+
+          <!-- Modes list -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+            <div class="btn" id="mode-row-0" style="justify-content: space-between; padding: 8px 12px;">
+              <span>00 Free-Air Economizer</span>
+              <span class="mono" style="font-size: 10px; color: var(--text-muted);">0 L/h (STANDBY)</span>
+            </div>
+            <div class="btn" id="mode-row-1" style="justify-content: space-between; padding: 8px 12px; border-color: var(--electric-sky); background: rgba(56, 189, 248, 0.1);">
+              <span>01 Evaporative Cooling</span>
+              <span class="mono" style="font-size: 10px; color: var(--electric-sky);" id="mode-water-val">184 L/h (ACTIVE)</span>
+            </div>
+            <div class="btn" id="mode-row-2" style="justify-content: space-between; padding: 8px 12px;">
+              <span>02 Mechanical Chiller</span>
+              <span class="mono" style="font-size: 10px; color: var(--text-muted);">STANDBY</span>
+            </div>
+          </div>
+
+          <!-- Water cap bar -->
+          <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px;" class="mono">
+              <span style="color: var(--text-muted);">WATER WITHDRAWAL CAP</span>
+              <span style="color: var(--emerald);" id="cap-status">COMPLIANT (46% DRAW)</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-sky" id="cap-bar" style="width: 46%;"></div></div>
+            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); margin-top: 6px;" class="mono">
+              <span id="cap-cur">184 / 400 L/h</span>
+              <span id="cap-headroom">216 L/h HEADROOM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Charts & Explainability -->
+    <div class="grid-2">
+      <!-- Live Rolling Area Chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--electric-sky)" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            Thermal & Resource Telemetry (Live Dataset Stream)
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--text-muted);">15-MIN INTERVALS</span>
+        </div>
+        <div class="panel-body">
+          <div style="display: flex; gap: 16px; margin-bottom: 12px; font-size: 10px;" class="mono">
+            <span style="display: flex; align-items: center; gap: 6px; color: var(--electric-sky);">
+              <span style="width: 8px; height: 8px; background: var(--electric-sky); border-radius: 50%;"></span> Peak Temp °C
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px; color: var(--emerald);">
+              <span style="width: 8px; height: 8px; background: var(--emerald); border-radius: 50%;"></span> Water Rate L/h
+            </span>
+          </div>
+
+          <svg class="chart-svg" id="telemetry-chart" viewBox="0 0 500 200">
+            <!-- Grid lines -->
+            <line x1="40" y1="20" x2="480" y2="20" stroke="#1f293d" stroke-dasharray="2 2" />
+            <line x1="40" y1="70" x2="480" y2="70" stroke="#1f293d" stroke-dasharray="2 2" />
+            <line x1="40" y1="120" x2="480" y2="120" stroke="#1f293d" stroke-dasharray="2 2" />
+            <line x1="40" y1="170" x2="480" y2="170" stroke="#1f293d" stroke-dasharray="2 2" />
+
+            <!-- Y Axis labels -->
+            <text x="35" y="24" fill="#64748b" font-size="8" text-anchor="end" font-family="IBM Plex Mono">85°</text>
+            <text x="35" y="74" fill="#64748b" font-size="8" text-anchor="end" font-family="IBM Plex Mono">75°</text>
+            <text x="35" y="124" fill="#64748b" font-size="8" text-anchor="end" font-family="IBM Plex Mono">65°</text>
+            <text x="35" y="174" fill="#64748b" font-size="8" text-anchor="end" font-family="IBM Plex Mono">55°</text>
+
+            <!-- Paths -->
+            <path id="path-water-area" fill="rgba(16, 185, 129, 0.12)" stroke="none" />
+            <path id="path-water" fill="none" stroke="var(--emerald)" stroke-width="2" />
+            <path id="path-temp-area" fill="rgba(56, 189, 248, 0.15)" stroke="none" />
+            <path id="path-temp" fill="none" stroke="var(--electric-sky)" stroke-width="2.5" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Explainability & Pareto Frontier -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--electric-sky)" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"/></svg>
+            TreeSHAP Feature Attribution & Pareto Knee
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--indigo);">EXPLAINABLE AI</span>
+        </div>
+        <div class="panel-body">
+          <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;" class="mono">
+            WHY DID TEMPERATURE FORECAST CHANGE? (LOCAL SHAP)
+          </div>
+
+          <div class="waterfall-item">
+            <div class="waterfall-header">
+              <span>Workload Intensity</span>
+              <span class="mono" id="shap-workload" style="color: var(--electric-sky);">+4.1°C</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-sky" id="shap-bar-workload" style="width: 65%;"></div></div>
+          </div>
+
+          <div class="waterfall-item">
+            <div class="waterfall-header">
+              <span>Fan Duty Airflow</span>
+              <span class="mono" id="shap-fan" style="color: var(--emerald);">-0.9°C</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-emerald" id="shap-bar-fan" style="width: 35%;"></div></div>
+          </div>
+
+          <div class="waterfall-item">
+            <div class="waterfall-header">
+              <span>Stull Wet-Bulb Baseline</span>
+              <span class="mono" id="shap-wet" style="color: var(--amber);">+2.0°C</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-amber" id="shap-bar-wet" style="width: 48%;"></div></div>
+          </div>
+
+          <div class="waterfall-item">
+            <div class="waterfall-header">
+              <span>Thermal Lag Inertia</span>
+              <span class="mono" id="shap-lag" style="color: var(--indigo);">+0.8°C</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar" id="shap-bar-lag" style="width: 25%; background: var(--indigo);"></div></div>
+          </div>
+
+          <!-- Pareto Knee Decision Callout -->
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="mono" style="font-size: 10px; color: var(--amber); font-weight: 700;">CHEBYSHEV KNEE DISPATCH</span>
+              <span class="mono" style="font-size: 9px; color: var(--text-muted);">TICK OPTIMAL</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 6px; font-size: 10px;" class="mono">
+              <div><p style="color: var(--text-muted); font-size: 8px;">RESOURCE COST</p><b style="color: var(--electric-sky);">$0.096</b><p style="font-size: 7px; color: var(--text-muted);">/kWh+L</p></div>
+              <div><p style="color: var(--text-muted); font-size: 8px;">THERMAL PENALTY</p><b style="color: var(--amber);">0.00</b><p style="font-size: 7px; color: var(--text-muted);">excess °C²</p></div>
+              <div><p style="color: var(--text-muted); font-size: 8px;">SLA LOSS</p><b style="color: var(--indigo);">7.0%</b><p style="font-size: 7px; color: var(--text-muted);">throttle</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Environmental Observer & Audit Trail -->
+    <div class="grid-2">
+      <!-- Environmental Observer -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--electric-sky)" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Autonomous Environmental Observer (Live Dataset View)
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--electric-sky);">OBSERVATION MODE</span>
+        </div>
+        <div class="panel-body">
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+              <span>Ambient Temperature</span>
+              <span class="mono" style="color: #fff;" id="obs-ambient">23.7°C</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-sky" id="obs-ambient-bar" style="width: 53%;"></div></div>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+              <span>Relative Humidity</span>
+              <span class="mono" style="color: #fff;" id="obs-rh">94%</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-sky" id="obs-rh-bar" style="width: 94%;"></div></div>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+              <span>Workload Demand</span>
+              <span class="mono" style="color: var(--electric-sky); font-weight: 600;" id="obs-load">98%</span>
+            </div>
+            <div class="load-bar-wrap"><div class="load-bar bar-sky" id="obs-load-bar" style="width: 98%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Autonomous Audit Trail -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Autonomous Observation Audit Trail
+          </div>
+          <span class="mono" style="font-size: 9px; color: var(--text-muted);" id="trail-tick">#4821</span>
+        </div>
+        <div class="panel-body">
+          <div class="log-container mono" id="audit-log">
+            <div class="log-line"><span>›</span> Tick #4821 · Evaporative cooling observed · water cap compliant</div>
+            <div class="log-line"><span>·</span> CQR forecast stable across all 3 nodes</div>
+            <div class="log-line"><span>·</span> Chebyshev knee-point action dispatched</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <span class="mono">COOLFLOW / AUTONOMOUS RESOURCE INTELLIGENCE</span>
+      <span class="mono" style="display: flex; align-items: center; gap: 6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        VIEW-ONLY OBSERVATION / 30-DAY TELEMETRY: EQCAM_Dataset_FINAL_with_RC (MARCH 2022)
+      </span>
+    </footer>
+  </div>
+
+  <!-- Real-Time Dataset Engine & Live Streaming Controller Script -->
+  <script>
+    let datasetRecords = [];
+    let currentIndex = 0;
+    let isPlaying = true;
+    let playbackSpeed = 1.0;
+    let timerId = null;
+    let selectedNodeId = 0;
+    let historyPoints = [];
+
+    // Mode text helpers
+    const modeNames = ['Free-Air Economizer', 'Evaporative Cooling', 'Mechanical Chiller'];
+    const modeShort = ['FREE-AIR', 'EVAPORATIVE', 'CHILLER'];
+
+    // Fetch live dataset records from API or fallback
+    async function initDataset() {
+      try {
+        const res = await fetch('/api/dataset/records?count=4320');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.records && data.records.length > 0) {
+            datasetRecords = data.records;
+            const slider = document.getElementById('dataset-slider');
+            slider.max = datasetRecords.length - 1;
+            applyRecord(datasetRecords[0]);
+            startPlaybackLoop();
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Falling back to direct telemetry stream.');
+      }
+
+      // If no local API connection, poll /api/state/latest or synthesize from initial seed
+      startFallbackPlayback();
+    }
+
+    function applyRecord(rec) {
+      if (!rec) return;
+
+      // Update Header Quick Stats
+      document.getElementById('stat-ambient').textContent = `${rec.ambient.toFixed(1)}°C`;
+      document.getElementById('stat-rh').textContent = `${rec.humidity}%`;
+      document.getElementById('stat-twet').textContent = `${rec.wetBulb.toFixed(1)}°C`;
+      const dayNum = rec.day || (Math.floor(currentIndex / 144) + 1);
+      document.getElementById('dataset-time-label').textContent = `DAY ${String(dayNum).padStart(2, '0')}/30 · ${rec.timestamp || rec.time}`;
+      document.getElementById('dataset-slider').value = currentIndex;
+      updateDaySelect(rec);
+
+      // Top KPI Cards
+      document.getElementById('kpi-temp').innerHTML = `${rec.peakTemp.toFixed(1)}<span>°C</span>`;
+      document.getElementById('kpi-temp-bar').style.width = `${Math.min(100, Math.max(0, (rec.peakTemp - 40) / 45 * 100))}%`;
+      const tempStatus = rec.peakTemp >= 80 ? 'CRITICAL HOTSPOT' : rec.peakTemp >= 76 ? 'PRE-HOTSPOT' : 'NORMAL RANGE';
+      const tempColor = rec.peakTemp >= 80 ? 'var(--destructive)' : rec.peakTemp >= 76 ? 'var(--amber)' : 'var(--emerald)';
+      document.getElementById('kpi-temp-status').style.color = tempColor;
+      document.getElementById('kpi-temp-status').textContent = `● ${tempStatus} · limit 80°C`;
+
+      document.getElementById('kpi-water').innerHTML = `${Math.round(rec.water)}<span>L/h</span>`;
+      document.getElementById('kpi-water-bar').style.width = `${Math.min(100, (rec.water / rec.cap) * 100)}%`;
+      document.getElementById('kpi-saved').textContent = Math.round(rec.saved).toLocaleString();
+
+      document.getElementById('kpi-wue').innerHTML = `${rec.wue.toFixed(2)}<span>L/kWh</span>`;
+
+      document.getElementById('kpi-power').innerHTML = `${Math.round(rec.power)}<span>kW</span>`;
+      const nodes = rec.nodes || [];
+      if (nodes.length >= 3) {
+        document.getElementById('n0-cpu').textContent = `${nodes[0].cpu}%`;
+        document.getElementById('n0-pwr').textContent = `${nodes[0].power}W`;
+        document.getElementById('n0-fan').textContent = `${nodes[0].fan}%`;
+        document.getElementById('n0-temp').textContent = `${nodes[0].temp.toFixed(1)}°`;
+        document.getElementById('n0-bar').style.width = `${nodes[0].cpu}%`;
+
+        document.getElementById('n1-cpu').textContent = `${nodes[1].cpu}%`;
+        document.getElementById('n1-pwr').textContent = `${nodes[1].power}W`;
+        document.getElementById('n1-fan').textContent = `${nodes[1].fan}%`;
+        document.getElementById('n1-temp').textContent = `${nodes[1].temp.toFixed(1)}°`;
+        document.getElementById('n1-bar').style.width = `${nodes[1].cpu}%`;
+
+        document.getElementById('n2-cpu').textContent = `${nodes[2].cpu}%`;
+        document.getElementById('n2-pwr').textContent = `${nodes[2].power}W`;
+        document.getElementById('n2-fan').textContent = `${nodes[2].fan}%`;
+        document.getElementById('n2-temp').textContent = `${nodes[2].temp.toFixed(1)}°`;
+        document.getElementById('n2-bar').style.width = `${nodes[2].cpu}%`;
+
+        document.getElementById('kpi-split').textContent = `${nodes[0].cpu}% / ${nodes[1].cpu}% / ${nodes[2].cpu}%`;
+        const totalCpu = nodes[0].cpu + nodes[1].cpu + nodes[2].cpu || 1;
+        document.getElementById('split-0').style.width = `${(nodes[0].cpu / totalCpu) * 100}%`;
+        document.getElementById('split-1').style.width = `${(nodes[1].cpu / totalCpu) * 100}%`;
+        document.getElementById('split-2').style.width = `${(nodes[2].cpu / totalCpu) * 100}%`;
+
+        // Update selected CQR
+        const sel = nodes[selectedNodeId] || nodes[0];
+        document.getElementById('cqr-node-tag').textContent = `/ NODE 0${sel.id}`;
+        document.getElementById('cqr-low').textContent = `${sel.low.toFixed(1)}°`;
+        document.getElementById('cqr-mid').textContent = `${sel.mid.toFixed(1)}°`;
+        document.getElementById('cqr-high').textContent = `${sel.high.toFixed(1)}°`;
+        document.getElementById('cqr-conf').textContent = `${sel.confidence}% CONFIDENCE`;
+        
+        const lowPct = Math.min(80, Math.max(5, (sel.low - 40) / 45 * 100));
+        const highPct = Math.min(95, Math.max(lowPct + 5, (sel.high - 40) / 45 * 100));
+        const midPct = Math.min(highPct, Math.max(lowPct, (sel.mid - 40) / 45 * 100));
+        document.getElementById('cqr-bar').style.left = `${lowPct}%`;
+        document.getElementById('cqr-bar').style.width = `${highPct - lowPct}%`;
+        document.getElementById('cqr-pip').style.left = `${midPct}%`;
+      }
+
+      // Mode
+      document.getElementById('kpi-mode').textContent = `0${rec.mode}`;
+      document.getElementById('kpi-mode-name').textContent = modeNames[rec.mode] || 'Evaporative';
+      document.getElementById('kpi-mode-tag').textContent = `${modeShort[rec.mode]} ACTIVE`;
+
+      // Psychrometric
+      document.getElementById('psych-twet').innerHTML = `${rec.wetBulb.toFixed(1)}<span style="font-size: 16px; color: var(--text-muted);">°C</span>`;
+      const isGateOpen = rec.mode === 0;
+      document.getElementById('psych-gate').textContent = isGateOpen ? 'GATE OPEN (T_WET ≤ 13°C)' : 'GATE CLOSED (T_WET > 13°C)';
+      document.getElementById('psych-gate').style.color = isGateOpen ? 'var(--emerald)' : 'var(--amber)';
+      document.getElementById('psych-gate').style.borderColor = isGateOpen ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)';
+      
+      const stullPct = Math.min(95, Math.max(5, (rec.wetBulb / 30.0) * 100));
+      document.getElementById('stull-needle').style.left = `${stullPct}%`;
+
+      // Highlight active mode row
+      for (let m = 0; m < 3; m++) {
+        const el = document.getElementById(`mode-row-${m}`);
+        if (el) {
+          if (m === rec.mode) {
+            el.style.borderColor = 'var(--electric-sky)';
+            el.style.background = 'rgba(56, 189, 248, 0.12)';
+          } else {
+            el.style.borderColor = 'var(--border)';
+            el.style.background = 'rgba(255, 255, 255, 0.02)';
+          }
+        }
+      }
+      document.getElementById('mode-water-val').textContent = rec.mode === 0 ? '0 L/h (FREE-AIR)' : `${Math.round(rec.water)} L/h (ACTIVE)`;
+
+      // Cap meter
+      const capPct = Math.min(100, Math.round((rec.water / rec.cap) * 100));
+      document.getElementById('cap-bar').style.width = `${capPct}%`;
+      document.getElementById('cap-cur').textContent = `${Math.round(rec.water)} / ${rec.cap} L/h`;
+      document.getElementById('cap-headroom').textContent = `${Math.max(0, rec.cap - Math.round(rec.water))} L/h HEADROOM`;
+
+      // TreeSHAP
+      if (rec.shap) {
+        document.getElementById('shap-workload').textContent = `${rec.shap.workload > 0 ? '+' : ''}${rec.shap.workload.toFixed(1)}°C`;
+        document.getElementById('shap-bar-workload').style.width = `${Math.min(100, Math.max(10, Math.abs(rec.shap.workload) * 15))}%`;
+        
+        document.getElementById('shap-fan').textContent = `${rec.shap.fan > 0 ? '+' : ''}${rec.shap.fan.toFixed(1)}°C`;
+        document.getElementById('shap-bar-fan').style.width = `${Math.min(100, Math.max(10, Math.abs(rec.shap.fan) * 18))}%`;
+
+        document.getElementById('shap-wet').textContent = `${rec.shap.wetBulb > 0 ? '+' : ''}${rec.shap.wetBulb.toFixed(1)}°C`;
+        document.getElementById('shap-bar-wet').style.width = `${Math.min(100, Math.max(10, Math.abs(rec.shap.wetBulb) * 18))}%`;
+
+        document.getElementById('shap-lag').textContent = `+${rec.shap.lag.toFixed(1)}°C`;
+      }
+
+      // Observer
+      document.getElementById('obs-ambient').textContent = `${rec.ambient.toFixed(1)}°C`;
+      document.getElementById('obs-ambient-bar').style.width = `${Math.min(100, Math.max(0, rec.ambient / 45 * 100))}%`;
+      document.getElementById('obs-rh').textContent = `${rec.humidity}%`;
+      document.getElementById('obs-rh-bar').style.width = `${rec.humidity}%`;
+      document.getElementById('obs-load').textContent = `${rec.workload}%`;
+      document.getElementById('obs-load-bar').style.width = `${rec.workload}%`;
+
+      // Audit Trail
+      document.getElementById('trail-tick').textContent = `#${rec.tick}`;
+      updateAuditLog(rec);
+
+      // Add to rolling history for area chart
+      historyPoints.push({ temp: rec.peakTemp, water: rec.water });
+      if (historyPoints.length > 20) historyPoints.shift();
+      renderTelemetryChart();
+    }
+
+    function renderTelemetryChart() {
+      if (historyPoints.length < 2) return;
+      const w = 440;
+      const h = 150;
+      const xStart = 40;
+      const yStart = 20;
+      const stepX = (w) / (historyPoints.length - 1);
+
+      let dTemp = '';
+      let dTempArea = `M ${xStart} 170 `;
+      let dWater = '';
+      let dWaterArea = `M ${xStart} 170 `;
+
+      historyPoints.forEach((pt, idx) => {
+        const x = xStart + idx * stepX;
+        // temp: 50 -> 85
+        const yT = yStart + (85 - Math.max(50, Math.min(85, pt.temp))) / 35 * h;
+        // water: 0 -> 400
+        const yW = yStart + (400 - Math.max(0, Math.min(400, pt.water))) / 400 * h;
+
+        if (idx === 0) {
+          dTemp += `M ${x} ${yT}`;
+          dWater += `M ${x} ${yW}`;
+        } else {
+          dTemp += ` L ${x} ${yT}`;
+          dWater += ` L ${x} ${yW}`;
+        }
+        dTempArea += `L ${x} ${yT} `;
+        dWaterArea += `L ${x} ${yW} `;
+      });
+
+      dTempArea += `L ${xStart + w} 170 Z`;
+      dWaterArea += `L ${xStart + w} 170 Z`;
+
+      document.getElementById('path-temp').setAttribute('d', dTemp);
+      document.getElementById('path-temp-area').setAttribute('d', dTempArea);
+      document.getElementById('path-water').setAttribute('d', dWater);
+      document.getElementById('path-water-area').setAttribute('d', dWaterArea);
+    }
+
+    function updateAuditLog(rec) {
+      const container = document.getElementById('audit-log');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      const modeText = modeNames[rec.mode] || 'Evaporative';
+      line.innerHTML = `<span>›</span> Tick #${rec.tick} · ${modeText} active · ${rec.water} L/h · Peak ${rec.peakTemp.toFixed(1)}°C (Dataset row)`;
+      container.insertBefore(line, container.firstChild);
+      while (container.children.length > 5) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function selectNode(id) {
+      selectedNodeId = id;
+      document.querySelectorAll('.node-card').forEach((el, idx) => {
+        el.classList.toggle('selected', idx === id);
+      });
+      if (datasetRecords[currentIndex]) {
+        applyRecord(datasetRecords[currentIndex]);
+      }
+    }
+
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      document.getElementById('play-icon').textContent = isPlaying ? '⏸' : '▶';
+      document.getElementById('play-text').textContent = isPlaying ? 'PAUSE' : 'PLAY';
+      if (isPlaying) {
+        startPlaybackLoop();
+      } else {
+        clearTimeout(timerId);
+      }
+    }
+
+    function stepDataset() {
+      if (datasetRecords.length === 0) return;
+      currentIndex = (currentIndex + 1) % datasetRecords.length;
+      applyRecord(datasetRecords[currentIndex]);
+    }
+
+    function onSliderSeek(val) {
+      currentIndex = parseInt(val, 10);
+      if (datasetRecords[currentIndex]) {
+        applyRecord(datasetRecords[currentIndex]);
+      }
+    }
+
+    function setSpeed(spd) {
+      playbackSpeed = spd;
+      document.querySelectorAll('#spd-1x, #spd-5x, #spd-20x, #spd-60x').forEach(el => el.classList.remove('active'));
+      const activeBtn = document.getElementById(`spd-${spd}x`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function jumpDay(diff) {
+      if (datasetRecords.length === 0) return;
+      const step = 144; // 144 * 10 mins = 24 hours (1 day)
+      currentIndex = Math.max(0, Math.min(datasetRecords.length - 1, currentIndex + diff * step));
+      applyRecord(datasetRecords[currentIndex]);
+    }
+
+    function jumpToDay(dayNum) {
+      if (datasetRecords.length === 0) return;
+      const targetDay = parseInt(dayNum, 10);
+      const targetIdx = Math.min(datasetRecords.length - 1, Math.max(0, (targetDay - 1) * 144));
+      currentIndex = targetIdx;
+      applyRecord(datasetRecords[currentIndex]);
+    }
+
+    function updateDaySelect(rec) {
+      const sel = document.getElementById('day-select');
+      if (sel && rec) {
+        const curDay = rec.day || (Math.floor(currentIndex / 144) + 1);
+        const options = [1, 5, 10, 15, 20, 25, 30];
+        let closest = options[0];
+        let minDiff = 999;
+        options.forEach(d => {
+          const diff = Math.abs(d - curDay);
+          if (diff < minDiff) { minDiff = diff; closest = d; }
+        });
+        sel.value = String(closest);
+      }
+    }
+
+    function startPlaybackLoop() {
+      clearTimeout(timerId);
+      if (!isPlaying || datasetRecords.length === 0) return;
+      
+      stepDataset();
+      const delay = 1000 / playbackSpeed;
+      timerId = setTimeout(startPlaybackLoop, delay);
+    }
+
+    // Direct polling against API when available
+    async function startFallbackPlayback() {
+      try {
+        const res = await fetch('/api/state/latest');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.live) {
+            applyRecord(data.live);
+          }
+        }
+      } catch (e) {}
+      setTimeout(startFallbackPlayback, 2000);
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', initDataset);
+  </script>
+</body>
+</html>
